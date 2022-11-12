@@ -13,12 +13,6 @@ findAllEmpty sb  = [(i,j)|i<-[1..9],j<-[1..9],(M.getElem i j sb) == 0]
 findNextEmpty :: SudokuBoard-> Maybe (Int,Int)
 findNextEmpty sb = M1.listToMaybe (findAllEmpty sb)
 
-createInit :: SudokuBoard->[IntermediateState]
-createInit sb =
-    case findNextEmpty sb of
-         Nothing -> error "Wrong sudoku"
-         Just x  -> [IMS sb x []]
-
 
 allNumbers = S.fromList [1..9]
 
