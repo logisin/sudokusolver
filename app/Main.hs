@@ -83,4 +83,4 @@ test = M.fromList 9 9 [0,0,0,1,3,2,4,0,0,0,7,0,0,0,8,1,0,0,0,2,9,7,6,0,5,0,8,0,9
 solve =  next test []
 
 main :: IO ()
-main = print "ssss"
+main = print solve
