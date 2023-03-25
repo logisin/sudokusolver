@@ -1,11 +1,24 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Main where
 
+import Miso
+import Miso.String
 import qualified Data.Matrix as M
 import qualified Data.Maybe as  M1
 import qualified Data.IntSet as S
 import qualified Data.Vector as V
+
 type SudokuBoard = M.Matrix Int
 data IntermediateState = IMS {s::SudokuBoard,pos::(Int,Int),usedValues::[Int] }
+
+type Model = SudokuBoard
+
+data Action 
+   = Init
+   | Solve
+   deriving (Show,Eq)
 
 findAllEmpty::SudokuBoard->[(Int,Int)]
 findAllEmpty sb  = [(i,j)|i<-[1..9],j<-[1..9],(M.getElem i j sb) == 0]
@@ -82,5 +95,35 @@ test = M.fromList 9 9 [0,0,0,1,3,2,4,0,0,0,7,0,0,0,8,1,0,0,0,2,9,7,6,0,5,0,8,0,9
 
 solve =  next test []
 
+updateModel :: Action -> Model -> Effect Action Model
+updateModel action m =
+   case action of
+      Init  -> noEff m
+      Solve -> noEff m
+
+viewModel :: Model -> View Action
+viewModel x = div_ [] [
+      mytable,
+      br_ [],
+      button_ [onClick Solve] [text "Solve"]
+     ]
+ where 
+    int_to_miso_str  = (ms . show) 
+    idcreator i j = "c" `append` (int_to_miso_str i) `append` (int_to_miso_str j)
+    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,value_ (int_to_miso_str(M.getElem i j x))] 
+    onerow i = tr_ [] [td_ [] [myinput i j]|j<-[1..9]]
+    mytable = table_ [] [onerow i|i<-[1..9]]
+
 main :: IO ()
-main = print solve
+main = startApp App {..}
+  where
+     initialAction = Init
+     model = M.zero 9 9
+     update = updateModel
+     view = viewModel
+     events = defaultEvents
+     subs = []
+     mountPoint = Nothing
+     logLevel = Off
+--main = print solve
+
