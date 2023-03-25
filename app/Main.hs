@@ -9,6 +9,7 @@ import qualified Data.Matrix as M
 import qualified Data.Maybe as  M1
 import qualified Data.IntSet as S
 import qualified Data.Vector as V
+import qualified Data.Either as E
 
 type SudokuBoard = M.Matrix Int
 data IntermediateState = IMS {s::SudokuBoard,pos::(Int,Int),usedValues::[Int] }
@@ -18,6 +19,7 @@ type Model = SudokuBoard
 data Action 
    = Init
    | Solve
+   | UpdateCell (Int,Int) MisoString
    deriving (Show,Eq)
 
 findAllEmpty::SudokuBoard->[(Int,Int)]
@@ -99,7 +101,8 @@ updateModel :: Action -> Model -> Effect Action Model
 updateModel action m =
    case action of
       Init  -> noEff m
-      Solve -> noEff m
+      Solve -> noEff (next m [])
+      UpdateCell p value -> noEff ( M.setElem (E.fromRight 0 . fromMisoStringEither $ value)  p m)
 
 viewModel :: Model -> View Action
 viewModel x = div_ [] [
@@ -110,7 +113,7 @@ viewModel x = div_ [] [
  where 
     int_to_miso_str  = (ms . show) 
     idcreator i j = "c" `append` (int_to_miso_str i) `append` (int_to_miso_str j)
-    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,value_ (int_to_miso_str(M.getElem i j x))] 
+    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,value_ (int_to_miso_str(M.getElem i j x)), onInput (UpdateCell (i,j))] 
     onerow i = tr_ [] [td_ [] [myinput i j]|j<-[1..9]]
     mytable = table_ [] [onerow i|i<-[1..9]]
 
