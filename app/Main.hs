@@ -10,11 +10,12 @@ import qualified Data.Maybe as  M1
 import qualified Data.IntSet as S
 import qualified Data.Vector as V
 import qualified Data.Either as E
+import qualified Data.Map as M2
 
 type SudokuBoard = M.Matrix Int
 data IntermediateState = IMS {s::SudokuBoard,pos::(Int,Int),usedValues::[Int] }
 
-type Model = SudokuBoard
+type Model = (M.Matrix Bool,SudokuBoard)
 
 data Action 
    = Init
@@ -101,8 +102,11 @@ updateModel :: Action -> Model -> Effect Action Model
 updateModel action m =
    case action of
       Init  -> noEff m
-      Solve -> noEff (next m [])
-      UpdateCell p value -> noEff ( M.setElem (E.fromRight 0 . fromMisoStringEither $ value)  p m)
+      Solve -> noEff (updateFstM,(next (snd m) []))
+      UpdateCell p value -> noEff (fst m,( M.setElem (E.fromRight 0 . fromMisoStringEither $ value)  p (snd m)))
+  where
+      takePositionOfSndM (i,j) = M.getElem i j (snd m)
+      updateFstM = M.mapPos (\p _ -> takePositionOfSndM p == 0) (fst m)
 
 viewModel :: Model -> View Action
 viewModel x = div_ [] [
@@ -113,7 +117,7 @@ viewModel x = div_ [] [
  where 
     int_to_miso_str  = (ms . show) 
     idcreator i j = "c" `append` (int_to_miso_str i) `append` (int_to_miso_str j)
-    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,value_ (int_to_miso_str(M.getElem i j x)), onInput (UpdateCell (i,j))] 
+    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,style_ $ M2.singleton "color" (if M.getElem i j (fst x) == True then "red" else "black"),value_ (int_to_miso_str(M.getElem i j (snd x))), onInput (UpdateCell (i,j))] 
     onerow i = tr_ [] [td_ [] [myinput i j]|j<-[1..9]]
     mytable = table_ [] [onerow i|i<-[1..9]]
 
@@ -121,7 +125,7 @@ main :: IO ()
 main = startApp App {..}
   where
      initialAction = Init
-     model = M.zero 9 9
+     model = (M.matrix 9 9 (\_->False),M.zero 9 9)
      update = updateModel
      view = viewModel
      events = defaultEvents
