@@ -117,7 +117,7 @@ viewModel x = div_ [] [
  where 
     int_to_miso_str  = (ms . show) 
     idcreator i j = "c" `append` (int_to_miso_str i) `append` (int_to_miso_str j)
-    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,style_ $ M2.singleton "color" (if M.getElem i j (fst x) == True then "red" else "black"),value_ (int_to_miso_str(M.getElem i j (snd x))), onInput (UpdateCell (i,j))] 
+    myinput i j = input_ [id_ (idcreator i j), type_ "number",min_ "0",max_ "9" ,size_ "2",style_ $ M2.singleton "color" (if M.getElem i j (fst x) == True then "red" else "black"),value_ (int_to_miso_str(M.getElem i j (snd x))), onInput (UpdateCell (i,j))] 
     onerow i = tr_ [] [td_ [] [myinput i j]|j<-[1..9]]
     mytable = table_ [] [onerow i|i<-[1..9]]
 
